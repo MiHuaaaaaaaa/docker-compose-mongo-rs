@@ -1,0 +1,65 @@
+version: "3.4"
+
+services:
+ mongo1:
+    image: mongo:6
+    container_name: mongo1
+    restart: always
+    ports:
+      - 27017:27017
+    volumes:
+      - ./data/mongodb1:/data/db
+      - ./conf/mongodb/keyfile:/data/keyfile
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+    command: mongod --replSet rs0 --keyFile /data/keyfile --bind_ip_all --port 27017
+    healthcheck:
+      test: test $$(echo "rs.initiate({_id:'rs0',members:[{_id:0,host:\"mongo1:27017\"},{_id:1,host:\"mongo2:27017\"},{_id:3,host:\"mongo3:27017\"}]}).ok || rs.status().ok" | mongosh --port 27017  --username root --password root --quiet) -eq 1
+      interval: 10s
+      start_period: 30s
+    entrypoint:
+      - bash
+      - -c
+      - |
+          chmod 400 /data/keyfile
+          chown 999:999 /data/keyfile
+          exec docker-entrypoint.sh $$@
+
+ mongo2:
+    image: mongo:6
+    container_name: mongo2
+    restart: always
+    volumes:
+      - ./data/mongodb2:/data/db
+      - ./conf/mongodb/keyfile:/data/keyfile
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+    command: mongod --replSet rs0 --keyFile /data/keyfile --bind_ip_all --port 27017
+    entrypoint:
+      - bash
+      - -c
+      - |
+          chmod 400 /data/keyfile
+          chown 999:999 /data/keyfile
+          exec docker-entrypoint.sh $$@
+
+ mongo3:
+    image: mongo:6
+    container_name: mongo3
+    restart: always
+    volumes:
+      - ./data/mongodb3:/data/db
+      - ./conf/mongodb/keyfile:/data/keyfile
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+    command: mongod --replSet rs0 --keyFile /data/keyfile --bind_ip_all --port 27017
+    entrypoint:
+      - bash
+      - -c
+      - |
+          chmod 400 /data/keyfile
+          chown 999:999 /data/keyfile
+          exec docker-entrypoint.sh $$@
